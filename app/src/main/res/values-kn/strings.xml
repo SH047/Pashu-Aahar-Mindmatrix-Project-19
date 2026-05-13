@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ಪಶು-ಆಹಾರ</string>
+    <string name="welcome_title">ಪಶು-ಆಹಾರಕ್ಕೆ ಸ್ವಾಗತ</string>
+    <string name="choose_farmer_level">ನೀವು ಯಾವ ರೀತಿಯ ರೈತರು?</string>
+    <string name="choose_language">ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ</string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pashu-Aahar</string>
+    <string name="welcome_title">Welcome to Pashu-Aahar</string>
+    <string name="choose_farmer_level">What type of farmer are you?</string>
+    <string name="choose_language">Choose Language</string>
+</resources>
