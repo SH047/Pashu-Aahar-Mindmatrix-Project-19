@@ -71,6 +71,15 @@ app/src/main/java/com/mindmatrix/pashuaahar/
 - `presentation/screens/`: onboarding, dashboard, herd, nutrition, health, savings
 - `presentation/components/`: reusable UI components and visual building blocks
 
+## Source Code
+
+The complete source code is included in this repository.
+
+- Main Android source: `app/src/main/java/com/mindmatrix/pashuaahar/`
+- Resources and UI strings: `app/src/main/res/`
+- Unit tests: `app/src/test/java/com/mindmatrix/pashuaahar/`
+- Gradle configuration: `build.gradle.kts`, `settings.gradle.kts`, `app/build.gradle.kts`
+
 ## Setup Requirements
 
 - Android Studio with Android SDK 34
