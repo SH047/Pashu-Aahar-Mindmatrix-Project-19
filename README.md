@@ -2,11 +2,16 @@
 
 Pashu Aahar is an Android app built for the MindMatrix internship project to help dairy farmers plan cattle nutrition, compare homemade feed with market feed, and manage herd health with a simple offline-friendly interface.
 
-## Live Demo
+## Demo
 
 Try the app in the browser using Appetize:
 
 [https://appetize.io/app/b_ztsk75xhtcg67de6eooeme26vm](https://appetize.io/app/b_ztsk75xhtcg67de6eooeme26vm)
+
+## Screenshots / Preview
+
+- Interactive demo: [Appetize live emulator](https://appetize.io/app/b_ztsk75xhtcg67de6eooeme26vm)
+- Repository: [GitHub project link](https://github.com/SH047/Pashu-Aahar-Mindmatrix-Project-19)
 
 ## Problem Statement
 
@@ -30,6 +35,16 @@ This project aims to make basic cattle nutrition planning easier and more practi
 - Vaccination and reminder-style dashboard cards
 - Offline-first local app flow for core features
 
+## Usage Flow
+
+1. Open the app and finish onboarding.
+2. Select your preferred language and farmer level.
+3. Add or manage cattle profiles in the herd section.
+4. Review the daily nutrition planner for the selected cow.
+5. Customize the ration using grazing hours and local ingredients.
+6. Check the savings dashboard to compare homemade feed with market feed.
+7. Use the health screen for body condition guidance and daily care follow-up.
+
 ## Tech Stack
 
 - Kotlin
@@ -49,13 +64,20 @@ app/src/main/java/com/mindmatrix/pashuaahar/
 └── presentation/  # screens, UI components, theming, view model
 ```
 
+## Key Modules
+
+- `data/`: local repository, onboarding preferences, ingredient datasets
+- `domain/`: nutrition calculator, health calculator, savings engine, models
+- `presentation/screens/`: onboarding, dashboard, herd, nutrition, health, savings
+- `presentation/components/`: reusable UI components and visual building blocks
+
 ## Setup Requirements
 
 - Android Studio with Android SDK 34
 - JDK 17
 - Android device or emulator
 
-## How to Run
+## Installation
 
 1. Clone the repository:
 
@@ -68,13 +90,23 @@ cd Pashu-Aahar-Mindmatrix-Project-19
 
 3. Let Gradle sync all dependencies.
 
-4. Run the app on an emulator or physical Android device.
+## Setup and Run
+
+1. Start an Android emulator or connect a physical Android device.
+2. Open the `app` run configuration in Android Studio.
+3. Click `Run` to install and launch the application.
 
 ## Command Line Build
 
 ```bash
 ./gradlew test
 ./gradlew assembleDebug
+```
+
+For a clean verification run:
+
+```bash
+./gradlew clean test assembleDebug
 ```
 
 On Windows, use:
@@ -87,6 +119,7 @@ gradlew.bat assembleDebug
 ## Verified Build Status
 
 - Unit tests verified locally with `./gradlew test` on May 15, 2026
+- Debug build verified locally with `./gradlew assembleDebug` on May 15, 2026
 
 ## Important Dependencies Included
 
@@ -98,6 +131,17 @@ This repository includes the files typically expected for a complete Android sub
 - `gradlew` and `gradlew.bat`
 - Gradle wrapper files under `gradle/wrapper/`
 - Android app module under `app/`
+
+## Why This Project is Custom
+
+This repository contains project-specific implementation for a real dairy farming use case:
+
+- nutrition calculation based on cattle profile and milk yield
+- local feed ingredient catalogue with cost and protein data
+- custom feed mixing workflow
+- homemade versus market feed cost comparison
+- herd profile management
+- health scoring and daily care tracking
 
 ## Originality Notes
 
@@ -119,6 +163,14 @@ This is not a default starter template. The app contains custom:
 - Farm Management
 - Herd Management
 - Health Tips
+
+## Future Improvements
+
+- Add more Indian language options
+- Store and compare past feed plans over time
+- Add richer analytics for milk yield trends
+- Add export and sharing options for farmers and cooperatives
+- Support more region-specific ingredient pricing
 
 ## Known Notes
 
