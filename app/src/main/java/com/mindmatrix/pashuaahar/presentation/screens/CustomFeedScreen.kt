@@ -37,8 +37,8 @@ fun CustomFeedScreen(
     
     // Derived state for nutrients
     val selectedIngredients = ingredients.filter { it.id in selectedIds }
-    val avgProtein = if (selectedIngredients.isEmpty()) 0f else selectedIngredients.sumOf { it.proteinPercent.toDouble() }.toFloat() / (selectedIngredients.size * 30f)
-    val avgEnergy = if (selectedIngredients.isEmpty()) 0f else selectedIngredients.sumOf { it.energyMcalPerKg.toDouble() }.toFloat() / (selectedIngredients.size * 3.5f)
+    val avgProtein = if (selectedIngredients.isEmpty()) 0f else selectedIngredients.sumOf { it.crudeProteinPercentage }.toFloat() / (selectedIngredients.size * 30f)
+    val avgEnergy = if (selectedIngredients.isEmpty()) 0f else selectedIngredients.sumOf { it.energyKcal.toDouble() }.toFloat() / (selectedIngredients.size * 3500f)
     
     val grassCount = selectedIngredients.count { it.category == "Energy Grasses" }
     val boosterCount = selectedIngredients.count { it.category == "Milk Builders" || it.category == "Nutrient Boosters" }

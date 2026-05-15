@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.mindmatrix.pashuaahar.domain.Breed
 import com.mindmatrix.pashuaahar.domain.CowProfile
 import com.mindmatrix.pashuaahar.domain.UserProfile
 import com.mindmatrix.pashuaahar.presentation.components.ScreenHeader
@@ -184,7 +185,7 @@ private fun CowProfileRow(
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "${profile.breed} · ${profile.weightKg} kg · ${profile.dailyMilkLitres.roundToInt()} L milk",
+                    text = "${profile.breed.name.replace("_", " ")} · ${profile.weightKg} kg · ${profile.dailyMilkLitres.roundToInt()} L milk",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f)
                 )
@@ -196,6 +197,7 @@ private fun CowProfileRow(
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun CowEditor(
     profile: CowProfile,
@@ -228,13 +230,18 @@ private fun CowEditor(
                                 modifier = Modifier.fillMaxWidth()
                             )
                             Spacer(modifier = Modifier.height(12.dp))
-                            OutlinedTextField(
-                                value = profile.breed,
-                                onValueChange = { onProfileChanged(profile.copy(breed = it)) },
-                                label = { Text("Breed (Jersey, Desi, etc.)") },
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                            Text(text = "Breed", style = MaterialTheme.typography.titleLarge)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Breed.entries.forEach { b ->
+                                    androidx.compose.material3.FilterChip(
+                                        selected = profile.breed == b,
+                                        onClick = { onProfileChanged(profile.copy(breed = b)) },
+                                        label = { Text(b.name.replace("_", " ")) },
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                }
+                            }
                             Spacer(modifier = Modifier.height(24.dp))
                             Button(
                                 onClick = { currentStep = 1 },
@@ -264,10 +271,10 @@ private fun CowEditor(
                             )
                             ProfileSlider(
                                 title = "Age",
-                                value = profile.ageMonths.toFloat(),
+                                value = profile.ageInMonths.toFloat(),
                                 valueRange = 1f..180f,
-                                label = "${profile.ageMonths} months",
-                                onValueChanged = { onProfileChanged(profile.copy(ageMonths = it.roundToInt())) }
+                                label = "${profile.ageInMonths} months",
+                                onValueChanged = { onProfileChanged(profile.copy(ageInMonths = it.roundToInt())) }
                             )
                             Spacer(modifier = Modifier.height(24.dp))
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

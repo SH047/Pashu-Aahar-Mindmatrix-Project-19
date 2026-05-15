@@ -4,12 +4,20 @@ data class FeedIngredient(
     val id: String,
     val name: String,
     val category: String,
-    val proteinPercent: Float,
-    val energyMcalPerKg: Float,
-    val pricePerKg: Float,
-    val visualHint: String,
-    val nutrientDensity: Float = 0.5f, // 0.0 to 1.0
+    val crudeProteinPercentage: Double,
+    val energyKcal: Int,
+    val costPerKgInINR: Double,
+    val visualHint: String = "",
+    val nutrientDensity: Float = 0.5f,
     val healthBenefit: String = "Balanced nutrition"
+)
+
+data class FeedRecipe(
+    val id: String,
+    val recipeName: String,
+    val ingredients: Map<FeedIngredient, Double>,
+    val totalCost: Double,
+    val totalProtein: Double
 )
 
 data class FeedBuilderState(

@@ -6,12 +6,15 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +26,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import com.mindmatrix.pashuaahar.data.LocalMarketRepository
+import com.mindmatrix.pashuaahar.domain.FeedIngredient
 import com.mindmatrix.pashuaahar.presentation.PashuAaharUiState
 import com.mindmatrix.pashuaahar.presentation.components.*
 import com.mindmatrix.pashuaahar.presentation.theme.BeautifulCard
@@ -41,9 +47,12 @@ fun NutritionScreen(
     onCowSelected: (String) -> Unit,
     onToggleFeed: (String, String) -> Unit,
     onModeChange: (Boolean) -> Unit,
-    onGrazingChange: (Float) -> Unit
+    onGrazingChange: (Float) -> Unit,
+    onAddStandardIngredient: (FeedIngredient) -> Unit = {},
+    onRemoveIngredient: (String) -> Unit = {}
 ) {
     var visible by remember { mutableStateOf(false) }
+    var showAddDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         delay(100)
@@ -175,7 +184,18 @@ fun NutritionScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Ration View
-                Text(text = if (state.isSuperMixMode) "Custom Mix Details" else "Standard Ration", style = MaterialTheme.typography.headlineSmall)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = if (state.isSuperMixMode) "Custom Mix Details" else "Standard Ration", style = MaterialTheme.typography.headlineSmall)
+                    if (!state.isSuperMixMode) {
+                        TextButton(onClick = { showAddDialog = true }) {
+                            Text("+ Add Ingredient", color = FieldGreen)
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 val displayPlan = state.feedPlan
@@ -190,10 +210,14 @@ fun NutritionScreen(
                     }
                     AnimatedVisibility(visible = itemVisible, enter = fadeIn() + slideInVertically { 20 }) {
                         val isDone = line.ingredient.id in state.feedCompletionStatus[state.cowProfile.id].orEmpty()
+                        val isExtra = line.ingredient.id in state.customMixIngredients.keys.map { it.id }
+                        
                         FeedLineCard(
                             line = line,
                             isDone = isDone,
-                            onToggle = { onToggleFeed(state.cowProfile.id, line.ingredient.id) }
+                            canDelete = isExtra,
+                            onToggle = { onToggleFeed(state.cowProfile.id, line.ingredient.id) },
+                            onDelete = { onRemoveIngredient(line.ingredient.id) }
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
@@ -216,6 +240,67 @@ fun NutritionScreen(
                 }
                 
                 Spacer(modifier = Modifier.height(32.dp))
+
+                // Market Availability Section
+                Text(text = "Local Market Reference", style = MaterialTheme.typography.headlineSmall)
+                Text(text = "Prices & Protein levels currently in village", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                Spacer(modifier = Modifier.height(12.dp))
+
+                LocalMarketRepository.allIngredients.groupBy { it.category }.forEach { (category, ingredients) ->
+                    Text(text = category, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = FieldGreen, modifier = Modifier.padding(vertical = 8.dp))
+                    ingredients.forEach { ingredient ->
+                        OutlinedCard(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.4f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(text = ingredient.name, fontWeight = FontWeight.SemiBold)
+                                    Text(text = "${ingredient.crudeProteinPercentage}% Crude Protein", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                                }
+                                Text(text = "₹${ingredient.costPerKgInINR.toInt()}/kg", fontWeight = FontWeight.ExtraBold, color = FieldGreen)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+        }
+    }
+
+    if (showAddDialog) {
+        Dialog(onDismissRequest = { showAddDialog = false }) {
+            BeautifulCard(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "Add to Standard Ration", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(LocalMarketRepository.allIngredients) { ingredient ->
+                            OutlinedCard(
+                                onClick = { 
+                                    onAddStandardIngredient(ingredient)
+                                    showAddDialog = false 
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                    Column {
+                                        Text(text = ingredient.name, fontWeight = FontWeight.Bold)
+                                        Text(text = "${ingredient.crudeProteinPercentage}% CP", style = MaterialTheme.typography.labelSmall)
+                                    }
+                                    Text(text = "₹${ingredient.costPerKgInINR.toInt()}/kg", color = FieldGreen, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -225,7 +310,9 @@ fun NutritionScreen(
 private fun FeedLineCard(
     line: com.mindmatrix.pashuaahar.domain.FeedLine,
     isDone: Boolean,
-    onToggle: () -> Unit
+    canDelete: Boolean = false,
+    onToggle: () -> Unit,
+    onDelete: () -> Unit = {}
 ) {
     BeautifulCard(
         modifier = Modifier.fillMaxWidth(),
@@ -239,7 +326,7 @@ private fun FeedLineCard(
                 when {
                     line.ingredient.category == "Energy Grasses" -> TallGrassIllustration()
                     line.ingredient.category == "Milk Builders" -> LegumeIllustration()
-                    line.ingredient.category == "Market Staples" -> {
+                    line.ingredient.category == "Market Staples" || line.ingredient.category == "Energy Sources" || line.ingredient.category == "Protein Sources" || line.ingredient.category == "Fodder" -> {
                         when {
                             line.ingredient.name.contains("Bran") -> BranIllustration()
                             line.ingredient.name.contains("Cake") -> CakeIllustration()
@@ -267,11 +354,24 @@ private fun FeedLineCard(
                     fontWeight = FontWeight.Bold,
                     textDecoration = if (isDone) androidx.compose.ui.text.style.TextDecoration.LineThrough else null
                 )
-                Text(
-                    text = "${line.quantityKg} kg",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = if (isDone) Color.Gray else FieldGreen
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "${line.quantityKg} kg",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = if (isDone) Color.Gray else FieldGreen
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "₹${line.ingredient.costPerKgInINR.toInt()}/kg",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Gray
+                    )
+                }
+            }
+            if (canDelete && !isDone) {
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.6f))
+                }
             }
             Checkbox(
                 checked = isDone,

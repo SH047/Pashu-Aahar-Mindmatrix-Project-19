@@ -375,7 +375,7 @@ private fun FeedLineCard(line: FeedLine, totalKg: Float) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "${line.ingredient.proteinPercent}% protein, Rs ${line.cost}",
+                text = "${line.ingredient.crudeProteinPercentage}% protein, Rs ${line.cost}",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f)
             )

@@ -11,10 +11,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import com.mindmatrix.pashuaahar.domain.FeedIngredient
+import com.mindmatrix.pashuaahar.domain.AppLanguage
+import com.mindmatrix.pashuaahar.domain.CowProfile
+import com.mindmatrix.pashuaahar.domain.DailyCareActivity
+import com.mindmatrix.pashuaahar.domain.FarmerLevel
+import com.mindmatrix.pashuaahar.domain.UserProfile
+import com.mindmatrix.pashuaahar.presentation.theme.PashuAaharTheme
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -32,6 +42,7 @@ import com.mindmatrix.pashuaahar.presentation.screens.HealthTipsScreen
 import com.mindmatrix.pashuaahar.presentation.screens.HerdListScreen
 import com.mindmatrix.pashuaahar.presentation.screens.NutritionScreen
 import com.mindmatrix.pashuaahar.presentation.screens.OnboardingScreen
+import com.mindmatrix.pashuaahar.presentation.screens.SavingsDashboardScreen
 import com.mindmatrix.pashuaahar.presentation.theme.Cream
 import com.mindmatrix.pashuaahar.presentation.theme.FieldGreen
 import com.mindmatrix.pashuaahar.presentation.theme.Meadow
@@ -46,6 +57,7 @@ sealed class AppRoute(val path: String) {
     data object Nutrition : AppRoute("nutrition")
     data object CustomFeed : AppRoute("custom_feed")
     data object HealthTips : AppRoute("health_tips")
+    data object Savings : AppRoute("savings")
 }
 
 private data class BottomNavItem(
@@ -58,13 +70,55 @@ private val bottomNavItems = listOf(
     BottomNavItem(AppRoute.Dashboard, "Dashboard", NavGlyph.Home),
     BottomNavItem(AppRoute.Nutrition, "Plan", NavGlyph.Leaf),
     BottomNavItem(AppRoute.CustomFeed, "Mix", NavGlyph.Leaf),
+    BottomNavItem(AppRoute.Savings, "Savings", NavGlyph.BarChart),
     BottomNavItem(AppRoute.HealthTips, "Health", NavGlyph.Shield)
 )
 
 @Composable
 fun PashuAaharApp(viewModel: MainViewModel) {
-    val navController = rememberNavController()
     val state = viewModel.state.value
+    PashuAaharAppContent(
+        state = state,
+        onLanguageSelected = viewModel::selectLanguage,
+        onFarmerLevelSelected = viewModel::selectFarmerLevel,
+        onCompleteOnboarding = viewModel::completeOnboarding,
+        onSelectCowProfile = viewModel::selectCowProfile,
+        onDailyCareToggled = viewModel::toggleDailyCare,
+        onDismissReminder = viewModel::dismissReminder,
+        onUpdateUserProfile = viewModel::updateUserProfile,
+        onDeleteCowProfile = viewModel::deleteCowProfile,
+        onCreateCowProfile = viewModel::createCowProfile,
+        onToggleFeedIngredient = viewModel::toggleFeedIngredient,
+        onSetSuperMixMode = viewModel::setSuperMixMode,
+        onSetGrazingHours = viewModel::setGrazingHours,
+        onUpdateCustomMix = { viewModel.updateCustomMix(it) },
+        onUpdateCowProfile = viewModel::updateCowProfile,
+        onAddIngredientToMix = viewModel::addIngredientToMix,
+        onRemoveIngredientFromMix = viewModel::removeIngredientFromMix
+    )
+}
+
+@Composable
+fun PashuAaharAppContent(
+    state: PashuAaharUiState,
+    onLanguageSelected: (AppLanguage) -> Unit,
+    onFarmerLevelSelected: (FarmerLevel) -> Unit,
+    onCompleteOnboarding: () -> Unit,
+    onSelectCowProfile: (String) -> Unit,
+    onDailyCareToggled: (String, DailyCareActivity) -> Unit,
+    onDismissReminder: (String) -> Unit,
+    onUpdateUserProfile: (UserProfile) -> Unit,
+    onDeleteCowProfile: (String) -> Unit,
+    onCreateCowProfile: (CowProfile) -> Unit,
+    onToggleFeedIngredient: (String, String) -> Unit,
+    onSetSuperMixMode: (Boolean) -> Unit,
+    onSetGrazingHours: (Float) -> Unit,
+    onUpdateCustomMix: (Set<String>) -> Unit,
+    onUpdateCowProfile: (CowProfile) -> Unit,
+    onAddIngredientToMix: (FeedIngredient) -> Unit,
+    onRemoveIngredientFromMix: (String) -> Unit
+) {
+    val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val currentDestination = backStack?.destination
     val showBottomBar = bottomNavItems.any { item ->
@@ -119,10 +173,10 @@ fun PashuAaharApp(viewModel: MainViewModel) {
             composable(AppRoute.Onboarding.path) {
                 OnboardingScreen(
                     state = state,
-                    onLanguageSelected = viewModel::selectLanguage,
-                    onFarmerLevelSelected = viewModel::selectFarmerLevel,
+                    onLanguageSelected = onLanguageSelected,
+                    onFarmerLevelSelected = onFarmerLevelSelected,
                     onContinue = {
-                        viewModel.completeOnboarding()
+                        onCompleteOnboarding()
                         navController.navigate(AppRoute.Dashboard.path) {
                             popUpTo(AppRoute.Onboarding.path) { inclusive = true }
                         }
@@ -133,11 +187,11 @@ fun PashuAaharApp(viewModel: MainViewModel) {
                 DashboardScreen(
                     state = state,
                     onCowSelected = {
-                        viewModel.selectCowProfile(it)
+                        onSelectCowProfile(it)
                         navController.navigate(AppRoute.CowDetail.path)
                     },
-                    onDailyCareToggled = viewModel::toggleDailyCare,
-                    onDismissReminder = viewModel::dismissReminder,
+                    onDailyCareToggled = onDailyCareToggled,
+                    onDismissReminder = onDismissReminder,
                     onFarmHeaderClick = { navController.navigate(AppRoute.FarmManagement.path) }
                 )
             }
@@ -145,8 +199,8 @@ fun PashuAaharApp(viewModel: MainViewModel) {
                 FarmManagementScreen(
                     userProfile = state.userProfile,
                     currentLevel = state.selectedFarmerLevel,
-                    onProfileUpdate = viewModel::updateUserProfile,
-                    onLevelChange = viewModel::selectFarmerLevel,
+                    onProfileUpdate = onUpdateUserProfile,
+                    onLevelChange = onFarmerLevelSelected,
                     onAddCow = { navController.navigate(AppRoute.AddCow.path) },
                     onBack = { navController.popBackStack() }
                 )
@@ -155,10 +209,10 @@ fun PashuAaharApp(viewModel: MainViewModel) {
                 HerdListScreen(
                     state = state,
                     onCowSelected = {
-                        viewModel.selectCowProfile(it)
+                        onSelectCowProfile(it)
                         navController.navigate(AppRoute.CowDetail.path)
                     },
-                    onDeleteCow = viewModel::deleteCowProfile,
+                    onDeleteCow = onDeleteCowProfile,
                     onAddCow = { navController.navigate(AppRoute.AddCow.path) }
                 )
             }
@@ -166,7 +220,7 @@ fun PashuAaharApp(viewModel: MainViewModel) {
                 AddCowScreen(
                     nextAvatarStyle = state.cowProfiles.size % 6,
                     onSave = {
-                        viewModel.createCowProfile(it)
+                        onCreateCowProfile(it)
                         navController.navigate(AppRoute.HerdList.path) {
                             popUpTo(AppRoute.HerdList.path) { inclusive = true }
                         }
@@ -179,7 +233,7 @@ fun PashuAaharApp(viewModel: MainViewModel) {
                     profile = state.cowProfile,
                     bodyCondition = state.bodyCondition,
                     onDelete = { id ->
-                        viewModel.deleteCowProfile(id)
+                        onDeleteCowProfile(id)
                         navController.popBackStack()
                     },
                     onBack = { navController.popBackStack() }
@@ -188,17 +242,28 @@ fun PashuAaharApp(viewModel: MainViewModel) {
             composable(AppRoute.Nutrition.path) {
                 NutritionScreen(
                     state = state,
-                    onCowSelected = viewModel::selectCowProfile,
-                    onToggleFeed = viewModel::toggleFeedIngredient,
-                    onModeChange = viewModel::setSuperMixMode,
-                    onGrazingChange = viewModel::setGrazingHours
+                    onCowSelected = onSelectCowProfile,
+                    onToggleFeed = onToggleFeedIngredient,
+                    onModeChange = onSetSuperMixMode,
+                    onGrazingChange = onSetGrazingHours
+                )
+            }
+            composable(AppRoute.Nutrition.path) {
+                NutritionScreen(
+                    state = state,
+                    onCowSelected = onSelectCowProfile,
+                    onToggleFeed = onToggleFeedIngredient,
+                    onModeChange = onSetSuperMixMode,
+                    onGrazingChange = onSetGrazingHours,
+                    onAddStandardIngredient = onAddIngredientToMix,
+                    onRemoveIngredient = onRemoveIngredientFromMix
                 )
             }
             composable(AppRoute.CustomFeed.path) {
                 CustomFeedScreen(
                     ingredients = state.feedIngredients,
                     onRecipeSaved = { 
-                        viewModel.updateCustomMix(it.keys)
+                        onUpdateCustomMix(it.keys)
                         navController.navigate(AppRoute.Nutrition.path)
                     }
                 )
@@ -206,10 +271,18 @@ fun PashuAaharApp(viewModel: MainViewModel) {
             composable(AppRoute.HealthTips.path) {
                 HealthTipsScreen(
                     state = state,
-                    onCowSelected = viewModel::selectCowProfile,
+                    onCowSelected = onSelectCowProfile,
                     onBcsSelected = { score ->
-                        viewModel.updateCowProfile(state.cowProfile.copy(bcsScore = score))
+                        onUpdateCowProfile(state.cowProfile.copy(bcsScore = score))
                     }
+                )
+            }
+            composable(AppRoute.Savings.path) {
+                SavingsDashboardScreen(
+                    customIngredients = state.customMixIngredients,
+                    targetProtein = 1.2, // 1.2kg CP target
+                    onAddIngredient = onAddIngredientToMix,
+                    onRemoveIngredient = onRemoveIngredientFromMix
                 )
             }
         }
@@ -223,5 +296,57 @@ private fun NavHostController.navigateBottom(route: AppRoute) {
         }
         launchSingleTop = true
         restoreState = true
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PashuAaharAppOnboardingPreview() {
+    PashuAaharTheme {
+        PashuAaharAppContent(
+            state = PashuAaharUiState(isOnboardingComplete = false),
+            onLanguageSelected = {},
+            onFarmerLevelSelected = {},
+            onCompleteOnboarding = {},
+            onSelectCowProfile = {},
+            onDailyCareToggled = { _, _ -> },
+            onDismissReminder = {},
+            onUpdateUserProfile = {},
+            onDeleteCowProfile = {},
+            onCreateCowProfile = {},
+            onToggleFeedIngredient = { _, _ -> },
+            onSetSuperMixMode = {},
+            onSetGrazingHours = {},
+            onUpdateCustomMix = {},
+            onUpdateCowProfile = {},
+            onAddIngredientToMix = {},
+            onRemoveIngredientFromMix = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PashuAaharAppDashboardPreview() {
+    PashuAaharTheme {
+        PashuAaharAppContent(
+            state = PashuAaharUiState(isOnboardingComplete = true),
+            onLanguageSelected = {},
+            onFarmerLevelSelected = {},
+            onCompleteOnboarding = {},
+            onSelectCowProfile = {},
+            onDailyCareToggled = { _, _ -> },
+            onDismissReminder = {},
+            onUpdateUserProfile = {},
+            onDeleteCowProfile = {},
+            onCreateCowProfile = {},
+            onToggleFeedIngredient = { _, _ -> },
+            onSetSuperMixMode = {},
+            onSetGrazingHours = {},
+            onUpdateCustomMix = {},
+            onUpdateCowProfile = {},
+            onAddIngredientToMix = {},
+            onRemoveIngredientFromMix = {}
+        )
     }
 }

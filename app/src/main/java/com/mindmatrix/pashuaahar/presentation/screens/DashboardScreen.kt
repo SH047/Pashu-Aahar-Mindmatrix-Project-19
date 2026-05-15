@@ -6,8 +6,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,6 +29,7 @@ import kotlinx.coroutines.delay
 import com.mindmatrix.pashuaahar.domain.DailyCareActivity
 import com.mindmatrix.pashuaahar.presentation.PashuAaharUiState
 import androidx.compose.material3.OutlinedTextField
+import com.mindmatrix.pashuaahar.presentation.components.BarnHeaderBackground
 import com.mindmatrix.pashuaahar.presentation.components.BarnInteriorIllustration
 import com.mindmatrix.pashuaahar.presentation.components.ReminderBanner
 import com.mindmatrix.pashuaahar.presentation.components.ScientificCalendarWidget
@@ -81,25 +80,27 @@ fun DashboardScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(FieldGreen)
                         .clickable { onFarmHeaderClick() }
-                        .padding(horizontal = 20.dp, vertical = 24.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(modifier = Modifier.size(54.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
+                    BarnHeaderBackground()
+                    Row(
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.size(54.dp).clip(CircleShape).background(FieldGreen.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
                             Text("🏡", style = MaterialTheme.typography.headlineSmall)
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            Text(text = state.userProfile.farmName, style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
-                            Text(text = "${state.userProfile.farmerName} · ${state.userProfile.village}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                            Text(text = state.userProfile.farmName, style = MaterialTheme.typography.titleLarge, color = FieldGreen, fontWeight = FontWeight.Bold)
+                            Text(text = "${state.userProfile.farmerName} · ${state.userProfile.village}", style = MaterialTheme.typography.bodySmall, color = FieldGreen.copy(alpha = 0.62f))
                         }
                     }
                 }
 
                 // Top Barn Section
                 Box(modifier = Modifier.fillMaxWidth().height(320.dp), contentAlignment = Alignment.Center) {
-                    BarnInteriorIllustration(cows = state.cowProfiles, onCowClick = onCowSelected)
+                    BarnInteriorIllustration(cowProfiles = state.cowProfiles, onCowClick = onCowSelected)
                 }
 
                 Column(modifier = Modifier.padding(20.dp)) {
@@ -136,7 +137,7 @@ fun DashboardScreen(
 
                     // Advanced Feeding Calendar
                     AnimatedVisibility(visible = visible, enter = fadeIn() + slideInVertically { 50 }) {
-                        ScientificCalendarWidget(history = state.feedingHistory)
+                        ScientificCalendarWidget(data = state.feedingHistory)
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))

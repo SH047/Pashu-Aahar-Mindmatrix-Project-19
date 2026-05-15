@@ -32,6 +32,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Pets
+import androidx.compose.material.icons.rounded.Tag
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -48,6 +51,7 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -66,11 +70,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.mindmatrix.pashuaahar.domain.Breed
 import com.mindmatrix.pashuaahar.domain.CowProfile
 import com.mindmatrix.pashuaahar.presentation.PashuAaharUiState
 import com.mindmatrix.pashuaahar.presentation.components.CowAvatar
 import com.mindmatrix.pashuaahar.presentation.components.EmptyStateWithAnimation
 import com.mindmatrix.pashuaahar.presentation.components.ScreenHeader
+import com.mindmatrix.pashuaahar.presentation.components.SuccessAnimation
 import com.mindmatrix.pashuaahar.presentation.theme.BeautifulCard
 import com.mindmatrix.pashuaahar.presentation.theme.Cream
 import com.mindmatrix.pashuaahar.presentation.theme.FieldGreen
@@ -251,16 +257,19 @@ private fun HerdCowCard(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AddCowScreen(
     nextAvatarStyle: Int,
     onSave: (CowProfile) -> Unit,
     onBack: () -> Unit
 ) {
+    var showSuccess by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
+    var breed by remember { mutableStateOf(Breed.DESI_GIR) }
     var ageText by remember { mutableStateOf("36") }
     var weight by remember { mutableFloatStateOf(380f) }
+    var targetYield by remember { mutableFloatStateOf(12f) }
     var offspringText by remember { mutableStateOf("0") }
     var lactationStage by remember { mutableStateOf("Early") }
     var fmd by remember { mutableStateOf(false) }
@@ -277,102 +286,159 @@ fun AddCowScreen(
         }
     }
 
+    if (showSuccess) {
+        SuccessAnimation(
+            visible = true,
+            onComplete = {
+                showSuccess = false
+                onBack()
+            }
+        )
+    }
+
     GradientBackground {
-        SlideInContent {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(20.dp)
-            ) {
-                ScreenHeader(title = "Add Cow", subtitle = "Create a visual profile")
-                Spacer(modifier = Modifier.height(18.dp))
-                AvatarCaptureCard(
-                    name = name.ifBlank { "New cow" },
-                    avatarStyle = nextAvatarStyle,
-                    photoTaken = photoTaken,
-                    generating = generating,
-                    onTakePhoto = { photoTaken = true }
-                )
-                Spacer(modifier = Modifier.height(18.dp))
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Name") },
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(14.dp))
-                Text(text = "Weight ${weight.roundToInt()} kg", style = MaterialTheme.typography.titleLarge)
-                Slider(value = weight, onValueChange = { weight = it }, valueRange = 160f..720f)
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = ageText,
-                    onValueChange = { ageText = it.filter(Char::isDigit).take(3) },
-                    label = { Text("Age in months") },
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(14.dp))
-                OutlinedTextField(
-                    value = offspringText,
-                    onValueChange = { offspringText = it.filter(Char::isDigit).take(2) },
-                    label = { Text("Number of Offspring (Calves)") },
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(18.dp))
-                Text(text = "Lactation period", style = MaterialTheme.typography.titleLarge)
-                Spacer(modifier = Modifier.height(8.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    listOf("Early", "Mid", "Late", "Dry").forEach { stage ->
-                        FilterChip(
-                            selected = lactationStage == stage,
-                            onClick = { lactationStage = stage },
-                            label = { Text(stage) },
-                            shape = RoundedCornerShape(18.dp)
-                        )
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    title = { Text("Add Cow", fontWeight = FontWeight.Bold) },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Rounded.ArrowBack, "Back")
+                        }
                     }
-                }
-                Spacer(modifier = Modifier.height(18.dp))
-                Text(text = "Vaccination status", style = MaterialTheme.typography.titleLarge)
-                VaccinationCheck("FMD", fmd) { fmd = it }
-                VaccinationCheck("Brucellosis", brucellosis) { brucellosis = it }
-                VaccinationCheck("Dewormed", dewormed) { dewormed = it }
-                Spacer(modifier = Modifier.height(18.dp))
-                PulseButton(
-                    text = "Save Cow",
-                    onClick = {
-                        onSave(
-                            CowProfile(
-                                id = UUID.randomUUID().toString(),
-                                name = name.ifBlank { "Cow" },
-                                weightKg = weight.roundToInt(),
-                                ageMonths = ageText.toIntOrNull() ?: 36,
-                                offspringCount = offspringText.toIntOrNull() ?: 0,
-                                lactationStage = lactationStage,
-                                lactationDay = when (lactationStage) {
-                                    "Early" -> 45
-                                    "Mid" -> 140
-                                    "Late" -> 260
-                                    else -> 0
-                                },
-                                avatarStyle = nextAvatarStyle,
-                                fmdVaccinated = fmd,
-                                brucellosisVaccinated = brucellosis,
-                                dewormed = dewormed
-                            )
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(10.dp))
-                OutlinedButton(
-                    onClick = onBack,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(22.dp)
+            }
+        ) { paddingValues ->
+            SlideInContent {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .verticalScroll(rememberScrollState())
+                        .padding(20.dp)
                 ) {
-                    Text("Back")
+                    ScreenHeader(title = "New Profile", subtitle = "Create a visual profile for your cow")
+                    Spacer(modifier = Modifier.height(18.dp))
+                    AvatarCaptureCard(
+                        name = name.ifBlank { "New cow" },
+                        avatarStyle = nextAvatarStyle,
+                        photoTaken = photoTaken,
+                        generating = generating,
+                        onTakePhoto = { photoTaken = true }
+                    )
+                    Spacer(modifier = Modifier.height(18.dp))
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Name") },
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = { Icon(Icons.Rounded.Pets, null) }
+                    )
+                    Spacer(modifier = Modifier.height(18.dp))
+                    Text(text = "Breed", style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Breed.entries.forEach { b ->
+                            FilterChip(
+                                selected = breed == b,
+                                onClick = { breed = b },
+                                label = { Text(b.name.replace("_", " ")) },
+                                shape = RoundedCornerShape(18.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(18.dp))
+                    Text(text = "Weight ${weight.roundToInt()} kg", style = MaterialTheme.typography.titleLarge)
+                    Slider(
+                        value = weight, 
+                        onValueChange = { weight = it }, 
+                        valueRange = 160f..720f,
+                        colors = SliderDefaults.colors(thumbColor = FieldGreen, activeTrackColor = FieldGreen)
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(text = "Target Yield ${targetYield.roundToInt()} Liters", style = MaterialTheme.typography.titleLarge)
+                    Slider(
+                        value = targetYield,
+                        onValueChange = { targetYield = it },
+                        valueRange = 2f..45f,
+                        colors = SliderDefaults.colors(thumbColor = FieldGreen, activeTrackColor = FieldGreen)
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    OutlinedTextField(
+                        value = ageText,
+                        onValueChange = { ageText = it.filter(Char::isDigit).take(3) },
+                        label = { Text("Age in months") },
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = { Icon(Icons.Rounded.Tag, null) }
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    OutlinedTextField(
+                        value = offspringText,
+                        onValueChange = { offspringText = it.filter(Char::isDigit).take(2) },
+                        label = { Text("Number of Offspring (Calves)") },
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(18.dp))
+                    Text(text = "Lactation period", style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        listOf("Early", "Mid", "Late", "Dry").forEach { stage ->
+                            FilterChip(
+                                selected = lactationStage == stage,
+                                onClick = { lactationStage = stage },
+                                label = { Text(stage) },
+                                shape = RoundedCornerShape(18.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(18.dp))
+                    Text(text = "Vaccination status", style = MaterialTheme.typography.titleLarge)
+                    VaccinationCheck("FMD", fmd) { fmd = it }
+                    VaccinationCheck("Brucellosis", brucellosis) { brucellosis = it }
+                    VaccinationCheck("Dewormed", dewormed) { dewormed = it }
+                    Spacer(modifier = Modifier.height(18.dp))
+                    PulseButton(
+                        text = "Save Cow Profile",
+                        onClick = {
+                            onSave(
+                                CowProfile(
+                                    id = UUID.randomUUID().toString(),
+                                    name = name.ifBlank { "Cow" },
+                                    breed = breed,
+                                    weightKg = weight.roundToInt(),
+                                    ageInMonths = ageText.toIntOrNull() ?: 36,
+                                    targetYieldLiters = targetYield,
+                                    offspringCount = offspringText.toIntOrNull() ?: 0,
+                                    lactationStage = lactationStage,
+                                    lactationDay = when (lactationStage) {
+                                        "Early" -> 45
+                                        "Mid" -> 140
+                                        "Late" -> 260
+                                        else -> 0
+                                    },
+                                    avatarStyle = nextAvatarStyle,
+                                    fmdVaccinated = fmd,
+                                    brucellosisVaccinated = brucellosis,
+                                    dewormed = dewormed
+                                )
+                            )
+                            showSuccess = true
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = onBack,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(22.dp)
+                    ) {
+                        Text("Cancel")
+                    }
                 }
             }
         }
@@ -510,8 +576,19 @@ fun CowDetailScreen(
                     Column(modifier = Modifier.padding(20.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column {
+                                Text(text = "Breed", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                                Text(text = profile.breed.name.replace("_", " "), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(text = "Target Yield", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                                Text(text = "${profile.targetYieldLiters.roundToInt()} L", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = FieldGreen)
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Column {
                                 Text(text = "Age", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
-                                Text(text = "${profile.ageMonths} Months", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                                Text(text = "${profile.ageInMonths} Months", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(text = "Weight", style = MaterialTheme.typography.labelMedium, color = Color.Gray)

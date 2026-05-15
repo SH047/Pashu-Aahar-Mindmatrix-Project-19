@@ -1,11 +1,16 @@
 package com.mindmatrix.pashuaahar.domain
 
+enum class Breed {
+    JERSEY, HF, DESI_GIR, DESI_SAHIWAL, OTHER
+}
+
 data class CowProfile(
     val id: String = "cow_1",
     val name: String = "Lakshmi",
-    val breed: String = "Gir",
+    val breed: Breed = Breed.DESI_GIR,
+    val ageInMonths: Int = 48,
     val weightKg: Int = 420,
-    val ageMonths: Int = 48,
+    val targetYieldLiters: Float = 12f,
     val dailyMilkLitres: Float = 8f,
     val pregnancyMonth: Int = 0,
     val lactationDay: Int = 90,

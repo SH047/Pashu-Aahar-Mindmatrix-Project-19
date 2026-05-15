@@ -2,6 +2,7 @@ package com.mindmatrix.pashuaahar.data
 
 import android.content.Context
 import com.mindmatrix.pashuaahar.domain.AppLanguage
+import com.mindmatrix.pashuaahar.domain.Breed
 import com.mindmatrix.pashuaahar.domain.CowProfile
 import com.mindmatrix.pashuaahar.domain.DailyCareActivity
 import com.mindmatrix.pashuaahar.domain.FarmerLevel
@@ -211,9 +212,10 @@ class PashuAaharRepository(context: Context) {
     private fun loadLegacyCowProfile(): CowProfile = CowProfile(
         id = preferences.getString(KEY_COW_ID, defaultCow.id) ?: defaultCow.id,
         name = preferences.getString(KEY_COW_NAME, defaultCow.name) ?: defaultCow.name,
-        breed = preferences.getString(KEY_COW_BREED, defaultCow.breed) ?: defaultCow.breed,
+        breed = runCatching { Breed.valueOf(preferences.getString(KEY_COW_BREED, defaultCow.breed.name).orEmpty()) }.getOrDefault(defaultCow.breed),
         weightKg = preferences.getInt(KEY_COW_WEIGHT, defaultCow.weightKg),
-        ageMonths = preferences.getInt(KEY_COW_AGE, defaultCow.ageMonths),
+        ageInMonths = preferences.getInt(KEY_COW_AGE, defaultCow.ageInMonths),
+        targetYieldLiters = preferences.getFloat(KEY_COW_TARGET_YIELD, defaultCow.targetYieldLiters),
         dailyMilkLitres = preferences.getFloat(KEY_COW_MILK, defaultCow.dailyMilkLitres),
         pregnancyMonth = preferences.getInt(KEY_COW_PREGNANCY, defaultCow.pregnancyMonth),
         lactationDay = preferences.getInt(KEY_COW_LACTATION, defaultCow.lactationDay)
@@ -318,10 +320,11 @@ class PashuAaharRepository(context: Context) {
     private fun CowProfile.toJson(): JSONObject = JSONObject()
         .put("id", id)
         .put("name", name)
-        .put("breed", breed)
+        .put("breed", breed.name)
         .put("weightKg", weightKg)
-        .put("ageMonths", ageMonths)
-        .put("dailyMilkLitres", dailyMilkLitres)
+        .put("ageInMonths", ageInMonths)
+        .put("targetYieldLiters", targetYieldLiters.toDouble())
+        .put("dailyMilkLitres", dailyMilkLitres.toDouble())
         .put("pregnancyMonth", pregnancyMonth)
         .put("lactationDay", lactationDay)
         .put("lactationStage", lactationStage)
@@ -334,9 +337,10 @@ class PashuAaharRepository(context: Context) {
     private fun JSONObject.toCowProfile(): CowProfile = CowProfile(
         id = optString("id", UUID.randomUUID().toString()),
         name = optString("name", defaultCow.name),
-        breed = optString("breed", defaultCow.breed),
+        breed = runCatching { Breed.valueOf(optString("breed", defaultCow.breed.name)) }.getOrDefault(defaultCow.breed),
         weightKg = optInt("weightKg", defaultCow.weightKg),
-        ageMonths = optInt("ageMonths", defaultCow.ageMonths),
+        ageInMonths = optInt("ageInMonths", defaultCow.ageInMonths),
+        targetYieldLiters = optDouble("targetYieldLiters", defaultCow.targetYieldLiters.toDouble()).toFloat(),
         dailyMilkLitres = optDouble("dailyMilkLitres", defaultCow.dailyMilkLitres.toDouble()).toFloat(),
         pregnancyMonth = optInt("pregnancyMonth", defaultCow.pregnancyMonth),
         lactationDay = optInt("lactationDay", defaultCow.lactationDay),
@@ -363,6 +367,7 @@ class PashuAaharRepository(context: Context) {
         const val KEY_COW_WEIGHT = "cow_weight"
         const val KEY_COW_AGE = "cow_age"
         const val KEY_COW_MILK = "cow_milk"
+        const val KEY_COW_TARGET_YIELD = "cow_target_yield"
         const val KEY_COW_PREGNANCY = "cow_pregnancy"
         const val KEY_COW_LACTATION = "cow_lactation"
         const val KEY_DAILY_CARE = "daily_care"

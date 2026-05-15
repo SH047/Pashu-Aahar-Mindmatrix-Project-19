@@ -2,6 +2,7 @@ package com.mindmatrix.pashuaahar.presentation
 
 import android.app.Application
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -38,6 +39,7 @@ data class PashuAaharUiState(
     val dismissedReminderIds: Set<String> = emptySet(),
     val isSuperMixMode: Boolean = false,
     val grazingHours: Float = 2f,
+    val customMixIngredients: Map<FeedIngredient, Double> = emptyMap(),
     val feedPlan: FeedPlan = NutritionCalculator().calculate(CowProfile(), SeedData.ingredients),
     val bodyCondition: BodyConditionResult = HealthCalculator().bodyCondition(CowProfile())
 )
@@ -50,6 +52,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _state = mutableStateOf(PashuAaharUiState())
     val state: State<PashuAaharUiState> = _state
+
+    private val _customIngredients = mutableStateMapOf<String, Double>()
 
     init {
         publish()
@@ -131,6 +135,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         publish()
     }
 
+    fun addIngredientToMix(ingredient: FeedIngredient) {
+        val current = _customIngredients[ingredient.id] ?: 0.0
+        _customIngredients[ingredient.id] = current + 1.0
+        publish()
+    }
+
+    fun removeIngredientFromMix(ingredientId: String) {
+        val current = _customIngredients[ingredientId] ?: 0.0
+        if (current > 1.0) {
+            _customIngredients[ingredientId] = current - 1.0
+        } else {
+            _customIngredients.remove(ingredientId)
+        }
+        publish()
+    }
+
     private var _grazingHours = 2f
     fun setGrazingHours(hours: Float) {
         _grazingHours = hours
@@ -154,6 +174,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val cowBodyConditions = repository.cowProfiles.associate { cow ->
             cow.id to healthCalculator.bodyCondition(cow, careCompletionRatio(cow.id, dailyCareStatus))
         }
+
+        val customMix = _customIngredients.entries.mapNotNull { entry ->
+            val ingredient = SeedData.ingredients.find { it.id == entry.key } 
+                ?: com.mindmatrix.pashuaahar.data.LocalMarketRepository.allIngredients.find { it.id == entry.key }
+            ingredient?.let { it to entry.value }
+        }.toMap()
+
         _state.value = PashuAaharUiState(
             isLoading = false,
             selectedFarmerLevel = repository.farmerLevel,
@@ -171,14 +198,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             dismissedReminderIds = repository.dismissedReminderIds,
             isSuperMixMode = repository.isSuperMixMode,
             grazingHours = _grazingHours,
+            customMixIngredients = customMix,
             feedPlan = nutritionCalculator.calculate(
                 profile = profile,
                 ingredients = SeedData.ingredients,
                 isSuperMix = repository.isSuperMixMode,
                 customMixIds = repository.customMixIngredientIds,
-                grazingHours = _grazingHours
+                grazingHours = _grazingHours,
+                extraIngredients = customMix
             ),
-            bodyCondition = cowBodyConditions.getValue(profile.id)
+            bodyCondition = cowBodyConditions.getOrDefault(profile.id, healthCalculator.bodyCondition(profile))
         )
     }
 

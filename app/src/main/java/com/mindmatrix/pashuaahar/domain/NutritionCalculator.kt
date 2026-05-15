@@ -9,7 +9,8 @@ class NutritionCalculator {
         ingredients: List<FeedIngredient>,
         isSuperMix: Boolean = false,
         customMixIds: Set<String> = emptySet(),
-        grazingHours: Float = 0f
+        grazingHours: Float = 0f,
+        extraIngredients: Map<FeedIngredient, Double> = emptyMap()
     ): FeedPlan {
         val milkSupportKg = profile.dailyMilkLitres * 0.42f
         val maintenanceKg = max(3.2f, profile.weightKg * 0.009f)
@@ -32,14 +33,20 @@ class NutritionCalculator {
             // Grazing reduces the required filler bulk
             val grazingReduction = (grazingHours / 8f) * 2f
             
-            listOf(
+            val standardLines = listOf(
                 FeedLine(riceBran, roundOne(max(0.5f, targetKg * 0.4f - grazingReduction)), 0f),
                 FeedLine(cottonseed, roundOne(targetKg * 0.25f), 0f),
                 FeedLine(kmf, roundOne(targetKg * 0.3f), 0f),
                 FeedLine(mineral, roundOne(max(0.1f, targetKg * 0.05f)), 0f)
             )
+            
+            val extraLines = extraIngredients.map { (ing, qty) ->
+                FeedLine(ing, qty.toFloat(), 0f)
+            }
+            
+            standardLines + extraLines
         }.map { line ->
-            line.copy(cost = roundOne(line.quantityKg * line.ingredient.pricePerKg))
+            line.copy(cost = roundOne((line.quantityKg * line.ingredient.costPerKgInINR).toFloat()))
         }
 
         val totalKg = roundOne(lines.sumOf { it.quantityKg.toDouble() }.toFloat())

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "129237959765",
+    "project_id": "pashu-aahar-beta",
+    "storage_bucket": "pashu-aahar-beta.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:129237959765:android:d533e7c2df7cabb63180dc",
+        "android_client_info": {
+          "package_name": "com.mindmatrix.pashuaahar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBuEwz5iTuhux7eE2ALhofYkzWEWURNAx8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

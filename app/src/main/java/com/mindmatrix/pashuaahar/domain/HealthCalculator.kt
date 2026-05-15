@@ -4,7 +4,7 @@ import kotlin.math.round
 
 class HealthCalculator {
     fun bodyCondition(profile: CowProfile, careCompletionRatio: Float = 1f): BodyConditionResult {
-        val ageFactor = (profile.ageMonths.coerceIn(18, 96) - 18) / 78f
+        val ageFactor = (profile.ageInMonths.coerceIn(18, 96) - 18) / 78f
         val milkFactor = profile.dailyMilkLitres / 18f
         val expectedWeight = 300f + (ageFactor * 180f) + (milkFactor * 35f)
         val missedCarePenalty = (1f - careCompletionRatio.coerceIn(0f, 1f)) * 0.7f
