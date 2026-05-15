@@ -2,6 +2,12 @@
 
 Pashu Aahar is an Android app built for the MindMatrix internship project to help dairy farmers plan cattle nutrition, compare homemade feed with market feed, and manage herd health with a simple offline-friendly interface.
 
+## Live Demo
+
+Try the app in the browser using Appetize:
+
+[https://appetize.io/app/b_ztsk75xhtcg67de6eooeme26vm](https://appetize.io/app/b_ztsk75xhtcg67de6eooeme26vm)
+
 ## Problem Statement
 
 Many small dairy farmers rely on rough estimates for cattle feeding. That can lead to:
